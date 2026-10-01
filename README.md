@@ -1,0 +1,13 @@
+Implemented:
+- FastAPI backend
+- Streamlit frontend
+- LangGraph workflow
+- LLM-powered supervisor
+- Task decomposition
+- Research Agent
+- Data Agent
+- Coding Agent
+- Reviewer Agent
+- Conditional agent routing
+- Multi-agent execution
+- Tool registry
