@@ -1,76 +1,96 @@
+import os
+
 from app.core.llm import get_llm
 
 
 def coding_agent_node(state):
 
-    plan = state.get("plan", [])
-    current_step = state.get("current_step", 0)
+    task = state["task"]
 
-    task = plan[current_step]["description"]
+    plan = state.get("plan", [])
+    results = state.get("results", [])
 
     llm = get_llm()
 
-    results = state.get("results", [])
+    previous_context = []
 
-    previous_results = "\n\n".join(
-        f"{r.get('agent', '')}: {r.get('output', '')[:700]}"
-        for r in results
-    )
+    for result in results:
+        previous_context.append({
+            "agent": result.get("agent", ""),
+            "task": result.get("task", ""),
+            "output": result.get("output", "")[:1500],
+        })
 
     prompt = f"""
-You are the coding specialist.
+You are the coding specialist in a multi-agent AI system.
 
-Complete this task:
-
+USER TASK:
 {task}
 
-Previous specialist outputs:
+PLAN:
+{plan}
 
-{previous_results}
+PREVIOUS AGENT RESULTS:
+{previous_context}
 
-Use relevant previous outputs when the task depends on them.
+Create a concise, correct Python solution for the coding task.
 
-Provide a short, complete, runnable Python example when code is requested.
-Keep the code under 40 lines.
-Explain the important part in 2-3 sentences.
-Do not add unnecessary detail.
+Requirements:
+
+- Use Python.
+- Prefer standard libraries and scikit-learn where appropriate.
+- Include only the important code.
+- Explain the approach briefly.
+- Avoid unnecessary long explanations.
+- Do not invent dataset-specific columns unless clearly stated.
+- Avoid target leakage.
+- Make the code logically executable.
+- Keep the response concise.
 """
 
+    model = os.getenv(
+        "GROQ_MODEL",
+        "openai/gpt-oss-20b"
+    )
+
     response = llm.chat.completions.create(
-        model="openai/gpt-oss-20b",
+        model=model,
         messages=[
             {
                 "role": "system",
-                "content": "You are a concise Python coding specialist.",
+                "content": (
+                    "You are a concise Python machine learning "
+                    "coding specialist."
+                ),
             },
             {
                 "role": "user",
                 "content": prompt,
             },
         ],
-        temperature=0.1,
-        max_tokens=700,
+        temperature=0.2,
+        max_tokens=1200,
     )
 
-    print(
-        f"[CODING] finish_reason={response.choices[0].finish_reason}"
-    )
+    message = response.choices[0].message
+    content = message.content
 
-    output = response.choices[0].message.content
+    finish_reason = response.choices[0].finish_reason
 
-    if not output:
+    print(f"[CODING] finish_reason={finish_reason}")
+
+    if not content:
         raise RuntimeError(
-            "Coding agent received an empty response from Groq."
+            f"Coding agent received an empty response from Groq. "
+            f"finish_reason={finish_reason}"
         )
 
-    result = {
-        "agent": "coding",
-        "task": task,
-        "output": output,
-        "status": "completed",
-    }
-
     return {
-        "results": [result],
-        "current_step": current_step + 1,
+        "results": [
+            {
+                "agent": "coding",
+                "task": task,
+                "output": content,
+            }
+        ]
     }

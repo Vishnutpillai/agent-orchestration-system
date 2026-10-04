@@ -1,5 +1,4 @@
 from langgraph.graph import StateGraph, START, END
-from app.agents.synthesizer_agent import synthesizer_node
 
 from app.core.state import AgentState
 
@@ -11,6 +10,36 @@ from app.agents.reviewer_agent import reviewer_node
 from app.agents.final_agent import final_agent_node
 
 
+def run_research(state):
+
+    result = research_agent_node(state)
+
+    return {
+        **result,
+        "current_step": state.get("current_step", 0) + 1,
+    }
+
+
+def run_data(state):
+
+    result = data_agent_node(state)
+
+    return {
+        **result,
+        "current_step": state.get("current_step", 0) + 1,
+    }
+
+
+def run_coding(state):
+
+    result = coding_agent_node(state)
+
+    return {
+        **result,
+        "current_step": state.get("current_step", 0) + 1,
+    }
+
+
 def route_from_supervisor(state):
 
     plan = state.get("plan", [])
@@ -19,7 +48,7 @@ def route_from_supervisor(state):
     if current_step >= len(plan):
         return "reviewer"
 
-    specialist = plan[current_step]["specialist"]
+    specialist = plan[current_step].get("specialist")
 
     if specialist not in {
         "research",
@@ -36,11 +65,10 @@ def route_after_agent(state):
     plan = state.get("plan", [])
     current_step = state.get("current_step", 0)
 
-    # All subtasks completed
     if current_step >= len(plan):
         return "reviewer"
 
-    specialist = plan[current_step]["specialist"]
+    specialist = plan[current_step].get("specialist")
 
     if specialist not in {
         "research",
@@ -56,10 +84,6 @@ def build_graph():
 
     graph = StateGraph(AgentState)
 
-    # =========================
-    # Nodes
-    # =========================
-
     graph.add_node(
         "supervisor",
         supervisor_node,
@@ -67,17 +91,17 @@ def build_graph():
 
     graph.add_node(
         "research",
-        research_agent_node,
+        run_research,
     )
 
     graph.add_node(
         "data",
-        data_agent_node,
+        run_data,
     )
 
     graph.add_node(
         "coding",
-        coding_agent_node,
+        run_coding,
     )
 
     graph.add_node(
@@ -90,18 +114,10 @@ def build_graph():
         final_agent_node,
     )
 
-    # =========================
-    # START -> Supervisor
-    # =========================
-
     graph.add_edge(
         START,
         "supervisor",
     )
-
-    # =========================
-    # Supervisor -> Specialist
-    # =========================
 
     graph.add_conditional_edges(
         "supervisor",
@@ -114,10 +130,6 @@ def build_graph():
         },
     )
 
-    # =========================
-    # Research -> Next Agent
-    # =========================
-
     graph.add_conditional_edges(
         "research",
         route_after_agent,
@@ -128,10 +140,6 @@ def build_graph():
             "reviewer": "reviewer",
         },
     )
-
-    # =========================
-    # Data -> Next Agent
-    # =========================
 
     graph.add_conditional_edges(
         "data",
@@ -144,10 +152,6 @@ def build_graph():
         },
     )
 
-    # =========================
-    # Coding -> Next Agent
-    # =========================
-
     graph.add_conditional_edges(
         "coding",
         route_after_agent,
@@ -159,18 +163,10 @@ def build_graph():
         },
     )
 
-    # =========================
-    # Reviewer -> Final
-    # =========================
-
     graph.add_edge(
         "reviewer",
         "final",
     )
-
-    # =========================
-    # Final -> END
-    # =========================
 
     graph.add_edge(
         "final",

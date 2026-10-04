@@ -1,111 +1,136 @@
-from app.core.llm import get_llm
 import json
+import os
+
+from app.core.llm import get_llm
 
 
 def reviewer_node(state):
 
+    task = state["task"]
     results = state.get("results", [])
 
     llm = get_llm()
 
-    # Keep the reviewer input small.
-    # We only need enough information to judge each specialist output.
     compact_results = []
 
-    for r in results:
-        compact_results.append(
-            {
-                "agent": r.get("agent", ""),
-                "task": r.get("task", ""),
-                "output": r.get("output", "")[:1800],
-            }
-        )
+    for result in results:
+        output = result.get("output", "")
 
-    results_text = json.dumps(
-        compact_results,
-        ensure_ascii=False,
-    )
+        compact_results.append({
+            "agent": result.get("agent", ""),
+            "task": result.get("task", ""),
+            "output": output[:2000],
+        })
 
     prompt = f"""
-You are the reviewer agent in a multi-agent AI system.
+You are the reviewer of a multi-agent AI orchestration system.
 
-Review the specialist outputs below.
+Review the specialist outputs for the user's task.
 
-SPECIALIST OUTPUTS:
-{results_text}
+USER TASK:
+{task}
 
-Your job:
-1. Check whether every specialist completed its assigned task.
-2. Check whether the answers are useful and coherent.
-3. Check whether the coding answer is reasonably complete.
-4. Give concise feedback.
-5. Return ONLY valid JSON.
+SPECIALIST RESULTS:
+{json.dumps(compact_results, ensure_ascii=False)}
 
-The JSON MUST have exactly these fields:
+Return ONLY valid JSON.
+
+Use exactly this structure:
 
 {{
   "approved": true,
-  "confidence": 0.9,
-  "feedback": "Short review feedback"
+  "confidence": 0.95,
+  "feedback": "Short review"
 }}
 
 Rules:
-- approved must be true or false.
-- confidence must be a number between 0 and 1.
-- feedback must be a short string.
-- Do NOT use markdown.
-- Do NOT use code fences.
-- Do NOT add any other fields.
-- Keep the JSON very short.
+
+- approved must be true or false
+- confidence must be a number between 0 and 1
+- feedback must be short
+- Do not use markdown
+- Do not use ```json
 """
 
+    model = os.getenv(
+        "GROQ_MODEL",
+        "openai/gpt-oss-20b"
+    )
+
     response = llm.chat.completions.create(
-        model="openai/gpt-oss-20b",
+        model=model,
         messages=[
             {
                 "role": "system",
-                "content": "You are a strict but concise output reviewer. Return only valid JSON.",
+                "content": (
+                    "You are a strict and concise reviewer. "
+                    "Return valid JSON only."
+                ),
             },
             {
                 "role": "user",
                 "content": prompt,
             },
         ],
-        temperature=0.0,
-        max_tokens=200,
+        temperature=0,
+        max_tokens=300,
         response_format={
             "type": "json_object"
         },
     )
 
-    print(
-        f"[REVIEWER] finish_reason="
-        f"{response.choices[0].finish_reason}"
-    )
+    content = response.choices[0].message.content
 
-    output = response.choices[0].message.content
-
-    if not output:
+    if not content:
         raise RuntimeError(
             "Reviewer received an empty response from Groq."
         )
 
+    print("\n===== REVIEWER RESPONSE =====")
+    print(content)
+    print("==============================\n")
+
     try:
-        review = json.loads(output)
+        review = json.loads(content)
     except json.JSONDecodeError as exc:
         raise RuntimeError(
-            f"Reviewer returned invalid JSON: {output}"
+            "Reviewer returned invalid JSON."
         ) from exc
 
-    # Defensive defaults
-    approved = bool(review.get("approved", False))
-    confidence = float(review.get("confidence", 0.0))
-    feedback = str(review.get("feedback", ""))
+    if "approved" not in review:
+        raise RuntimeError(
+            "Reviewer response is missing 'approved'."
+        )
+
+    if "confidence" not in review:
+        raise RuntimeError(
+            "Reviewer response is missing 'confidence'."
+        )
+
+    if "feedback" not in review:
+        raise RuntimeError(
+            "Reviewer response is missing 'feedback'."
+        )
+
+    if not isinstance(review["approved"], bool):
+        raise RuntimeError(
+            "Reviewer 'approved' must be boolean."
+        )
+
+    try:
+        confidence = float(review["confidence"])
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError(
+            "Reviewer 'confidence' must be a number."
+        ) from exc
+
+    if not 0 <= confidence <= 1:
+        raise RuntimeError(
+            "Reviewer 'confidence' must be between 0 and 1."
+        )
+
+    review["confidence"] = confidence
 
     return {
-        "review": {
-            "approved": approved,
-            "confidence": confidence,
-            "feedback": feedback,
-        }
+        "review": review
     }

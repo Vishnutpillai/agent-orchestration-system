@@ -27,7 +27,9 @@ def run_agent(request: TaskRequest):
 
     result = agent_graph.invoke(
         {
-            "task": request.task
+            "task": request.task,
+            "current_step": 0,
+            "results": [],
         }
     )
 

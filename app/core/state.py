@@ -10,11 +10,11 @@ class AgentState(TypedDict, total=False):
     # Supervisor-generated execution plan
     plan: List[Dict[str, Any]]
 
-    # Current subtask being executed
-    current_step: int
-
     # Agent currently selected
     selected_agent: str
+
+    # Current subtask being executed
+    current_step: int
 
     # Results from all specialist agents
     results: Annotated[
