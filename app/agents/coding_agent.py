@@ -3,61 +3,74 @@ from app.core.llm import get_llm
 
 def coding_agent_node(state):
 
-    step = state["current_step"]
-    plan_item = state["plan"][step]
+    plan = state.get("plan", [])
+    current_step = state.get("current_step", 0)
 
-    task = plan_item["description"]
+    task = plan[current_step]["description"]
 
     llm = get_llm()
+
+    results = state.get("results", [])
+
+    previous_results = "\n\n".join(
+        f"{r.get('agent', '')}: {r.get('output', '')[:700]}"
+        for r in results
+    )
+
     prompt = f"""
-You are the Coding Specialist Agent.
+You are the coding specialist.
 
-You are executing one subtask from a larger
-multi-agent workflow.
+Complete this task:
 
-Original user task:
-{state["task"]}
-
-Your assigned subtask:
 {task}
 
-Expected output:
-{plan_item.get("expected_output", "Working code and explanation")}
+Previous specialist outputs:
 
-Provide:
-- explanation
-- implementation
-- important considerations
-- possible edge cases
+{previous_results}
 
-Use Python unless another language is explicitly requested.
+Use relevant previous outputs when the task depends on them.
 
-IMPORTANT CODE RULES:
+Provide a short, complete, runnable Python example when code is requested.
+Keep the code under 40 lines.
+Explain the important part in 2-3 sentences.
+Do not add unnecessary detail.
+"""
 
-1. Generate syntactically valid Python.
-2. The code must run as a normal .py Python script.
-3. Do NOT use Jupyter-only syntax such as:
-   - %matplotlib inline
-   - %%time
-   - display()
-4. Use print() instead of display().
-5. Do not put extra quotation marks inside Python expressions.
-6. Make sure all parentheses, brackets and quotation marks are balanced.
-7. If you provide a code block, use:
-   ```python
-   """
-   
-    response = llm.invoke(prompt)
+    response = llm.chat.completions.create(
+        model="openai/gpt-oss-20b",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a concise Python coding specialist.",
+            },
+            {
+                "role": "user",
+                "content": prompt,
+            },
+        ],
+        temperature=0.1,
+        max_tokens=700,
+    )
+
+    print(
+        f"[CODING] finish_reason={response.choices[0].finish_reason}"
+    )
+
+    output = response.choices[0].message.content
+
+    if not output:
+        raise RuntimeError(
+            "Coding agent received an empty response from Groq."
+        )
 
     result = {
         "agent": "coding",
-        "step": step + 1,
         "task": task,
-        "output": response.content,
+        "output": output,
         "status": "completed",
     }
 
     return {
         "results": [result],
-        "current_step": step + 1,
+        "current_step": current_step + 1,
     }

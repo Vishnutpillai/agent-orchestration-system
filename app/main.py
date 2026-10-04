@@ -25,14 +25,19 @@ def root():
 @app.post("/run")
 def run_agent(request: TaskRequest):
 
-    result = agent_graph.invoke({
-        "task": request.task
-    })
+    result = agent_graph.invoke(
+        {
+            "task": request.task
+        }
+    )
 
     return {
         "task": request.task,
         "plan": result.get("plan", []),
         "results": result.get("results", []),
         "review": result.get("review", {}),
-        "final_response": result.get("final_response", ""),
+        "final_response": result.get(
+            "final_response",
+            "",
+        ),
     }

@@ -1,4 +1,5 @@
 from langgraph.graph import StateGraph, START, END
+from app.agents.synthesizer_agent import synthesizer_node
 
 from app.core.state import AgentState
 
@@ -7,6 +8,7 @@ from app.agents.research_agent import research_agent_node
 from app.agents.data_agent import data_agent_node
 from app.agents.coding_agent import coding_agent_node
 from app.agents.reviewer_agent import reviewer_node
+from app.agents.final_agent import final_agent_node
 
 
 def route_from_supervisor(state):
@@ -54,7 +56,10 @@ def build_graph():
 
     graph = StateGraph(AgentState)
 
+    # =========================
     # Nodes
+    # =========================
+
     graph.add_node(
         "supervisor",
         supervisor_node,
@@ -80,13 +85,24 @@ def build_graph():
         reviewer_node,
     )
 
+    graph.add_node(
+        "final",
+        final_agent_node,
+    )
+
+    # =========================
     # START -> Supervisor
+    # =========================
+
     graph.add_edge(
         START,
         "supervisor",
     )
 
-    # Supervisor -> first specialist
+    # =========================
+    # Supervisor -> Specialist
+    # =========================
+
     graph.add_conditional_edges(
         "supervisor",
         route_from_supervisor,
@@ -98,7 +114,10 @@ def build_graph():
         },
     )
 
-    # After Research
+    # =========================
+    # Research -> Next Agent
+    # =========================
+
     graph.add_conditional_edges(
         "research",
         route_after_agent,
@@ -110,7 +129,10 @@ def build_graph():
         },
     )
 
-    # After Data
+    # =========================
+    # Data -> Next Agent
+    # =========================
+
     graph.add_conditional_edges(
         "data",
         route_after_agent,
@@ -122,7 +144,10 @@ def build_graph():
         },
     )
 
-    # After Coding
+    # =========================
+    # Coding -> Next Agent
+    # =========================
+
     graph.add_conditional_edges(
         "coding",
         route_after_agent,
@@ -134,9 +159,21 @@ def build_graph():
         },
     )
 
-    # Reviewer -> END
+    # =========================
+    # Reviewer -> Final
+    # =========================
+
     graph.add_edge(
         "reviewer",
+        "final",
+    )
+
+    # =========================
+    # Final -> END
+    # =========================
+
+    graph.add_edge(
+        "final",
         END,
     )
 

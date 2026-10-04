@@ -1,62 +1,7 @@
 import json
+import os
 
 from app.core.llm import get_llm
-
-
-SUPERVISOR_PROMPT = """
-You are the Supervisor Agent in a multi-agent orchestration system.
-
-Your job is to analyze the user's task and create a structured execution plan.
-
-Available specialist agents:
-
-1. research
-   - Research
-   - Information gathering
-   - Explanations
-   - Knowledge retrieval
-
-2. data
-   - CSV analysis
-   - Pandas
-   - Statistics
-   - Data processing
-   - Data visualization
-
-3. coding
-   - Python
-   - Programming
-   - Debugging
-   - Algorithms
-   - Code generation
-
-Rules:
-
-- Break complex tasks into logical subtasks.
-- Use multiple specialists when necessary.
-- Keep simple tasks to one specialist.
-- Order subtasks logically.
-- Return ONLY valid JSON.
-
-JSON format:
-
-{{
-    "plan": [
-        {{
-            "id": 1,
-            "specialist": "research",
-            "description": "subtask description",
-            "required_inputs": ["user_task"],
-            "expected_output": "expected result",
-            "complexity": "low"
-        }}
-    ]
-}}
-
-User task:
-
-{task}
-"""
 
 
 def supervisor_node(state):
@@ -65,68 +10,144 @@ def supervisor_node(state):
 
     llm = get_llm()
 
-    prompt = SUPERVISOR_PROMPT.format(
-        task=task
+    model = os.getenv(
+        "GROQ_MODEL",
+        "openai/gpt-oss-20b"
     )
 
-    response = llm.invoke(prompt)
+    prompt = f"""
+You are the supervisor of a multi-agent AI orchestration system.
 
-    content = response.content
+Your job is to divide the user's task into clear sequential subtasks.
 
-    # Some models/providers can return fenced JSON.
-    if isinstance(content, list):
-        content = "".join(
-            item.get("text", "")
-            if isinstance(item, dict)
-            else str(item)
-            for item in content
+Available specialist agents:
+
+- research: research, explanations, concepts, information
+- data: datasets, CSV, Pandas, statistics, EDA, preprocessing
+- coding: Python, programming, debugging, algorithms
+
+USER TASK:
+{task}
+
+Create the smallest useful sequential plan.
+
+Rules:
+
+1. Use only these specialist names:
+   research
+   data
+   coding
+
+2. Return ONLY valid JSON.
+
+3. Do not use markdown.
+
+4. Do not use ```json.
+
+5. The JSON must have exactly this structure:
+
+{{
+  "plan": [
+    {{
+      "id": 1,
+      "specialist": "research",
+      "description": "short description",
+      "required_inputs": [],
+      "expected_output": "short description",
+      "complexity": "low",
+      "status": "pending"
+    }}
+  ]
+}}
+
+6. Identify every distinct deliverable requested by the user.
+
+7. Never omit a requested deliverable.
+
+8. If the user asks for research, explanation, or concepts, create a research step.
+
+9. If the user asks for datasets, data analysis, statistics, EDA, or preprocessing, create a data step.
+
+10. If the user asks for Python, programming, implementation, or debugging, create a coding step.
+
+11. Create between 1 and 5 useful steps.
+
+12. Preserve dependencies using required_inputs.
+
+13. Keep each description concise.
+"""
+
+    response = llm.chat.completions.create(
+        model=model,
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are a task-planning supervisor. "
+                    "Always return valid JSON only."
+                ),
+            },
+            {
+                "role": "user",
+                "content": prompt,
+            },
+        ],
+        temperature=0,
+        max_tokens=1200,
+        response_format={
+            "type": "json_object"
+        },
+    )
+
+    content = response.choices[0].message.content
+
+    if not content:
+        raise RuntimeError(
+            "Supervisor received an empty response from Groq."
         )
 
-    content = str(content).strip()
-
-    if content.startswith("```json"):
-        content = content[7:]
-
-    if content.startswith("```"):
-        content = content[3:]
-
-    if content.endswith("```"):
-        content = content[:-3]
-
-    content = content.strip()
+    print("\n===== SUPERVISOR RESPONSE =====")
+    print(content)
+    print("================================\n")
 
     try:
-        parsed = json.loads(content)
-        plan = parsed.get("plan", [])
+        data = json.loads(content)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(
+            "Supervisor returned invalid JSON."
+        ) from exc
 
-    except json.JSONDecodeError:
-        plan = [
-            {
-                "id": 1,
-                "specialist": "research",
-                "description": task,
-                "required_inputs": ["user_task"],
-                "expected_output": "specialist_response",
-                "complexity": "low",
-            }
-        ]
+    if "plan" not in data:
+        raise RuntimeError(
+            "Supervisor JSON does not contain a 'plan' field."
+        )
+
+    plan = data["plan"]
+
+    if not isinstance(plan, list):
+        raise RuntimeError(
+        "Supervisor 'plan' must be a list."
+    )
 
     if not plan:
-        plan = [
-            {
-                "id": 1,
-                "specialist": "research",
-                "description": task,
-                "required_inputs": ["user_task"],
-                "expected_output": "specialist_response",
-                "complexity": "low",
-            }
-        ]
+        raise RuntimeError(
+        "Supervisor returned an empty plan."
+    )
 
-    selected_agent = plan[0]["specialist"]
+    allowed_agents = {
+    "research",
+    "data",
+    "coding",
+}
+
+    for item in plan:
+
+        if item.get("specialist") not in allowed_agents:
+            raise RuntimeError(
+                f"Invalid specialist: {item.get('specialist')}"
+            )
 
     return {
     "plan": plan,
-    "selected_agent": selected_agent,
     "current_step": 0,
 }
