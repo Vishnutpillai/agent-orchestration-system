@@ -12,40 +12,38 @@ def coding_agent_node(state):
 
     llm = get_llm()
 
+    # Keep only useful previous context
     previous_context = []
 
     for result in results:
         previous_context.append({
             "agent": result.get("agent", ""),
-            "task": result.get("task", ""),
-            "output": result.get("output", "")[:1500],
+            "output": result.get("output", "")[:1000],
         })
 
     prompt = f"""
-You are the coding specialist in a multi-agent AI system.
+You are the coding specialist.
 
 USER TASK:
 {task}
 
-PLAN:
+CODING REQUIREMENTS FROM PLAN:
 {plan}
 
-PREVIOUS AGENT RESULTS:
+USEFUL PREVIOUS RESULTS:
 {previous_context}
 
-Create a concise, correct Python solution for the coding task.
+Create a concise Python solution.
 
 Requirements:
-
 - Use Python.
-- Prefer standard libraries and scikit-learn where appropriate.
-- Include only the important code.
-- Explain the approach briefly.
-- Avoid unnecessary long explanations.
-- Do not invent dataset-specific columns unless clearly stated.
-- Avoid target leakage.
-- Make the code logically executable.
-- Keep the response concise.
+- Use scikit-learn when appropriate.
+- Include executable code.
+- Include only important code.
+- Briefly explain the approach.
+- Do not invent dataset columns unless required.
+- Avoid data leakage.
+- Keep the answer under 700 words.
 """
 
     model = os.getenv(
@@ -59,8 +57,8 @@ Requirements:
             {
                 "role": "system",
                 "content": (
-                    "You are a concise Python machine learning "
-                    "coding specialist."
+                    "You are a concise Python ML coding specialist. "
+                    "Return a practical solution."
                 ),
             },
             {
@@ -68,21 +66,22 @@ Requirements:
                 "content": prompt,
             },
         ],
-        temperature=0.2,
-        max_tokens=1200,
+        temperature=0.1,
+        max_tokens=1800,
     )
 
-    message = response.choices[0].message
-    content = message.content
+    choice = response.choices[0]
 
-    finish_reason = response.choices[0].finish_reason
+    print(
+        f"[CODING] finish_reason={choice.finish_reason}"
+    )
 
-    print(f"[CODING] finish_reason={finish_reason}")
+    content = choice.message.content
 
     if not content:
         raise RuntimeError(
-            f"Coding agent received an empty response from Groq. "
-            f"finish_reason={finish_reason}"
+            f"Coding agent returned empty content. "
+            f"finish_reason={choice.finish_reason}"
         )
 
     return {

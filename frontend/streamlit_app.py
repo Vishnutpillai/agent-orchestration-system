@@ -22,7 +22,8 @@ st.write(
 task = st.text_area(
     "Enter your task",
     placeholder="Example: Explain how machine learning works",
-    height=150,
+    height=250,
+
 )
 
 

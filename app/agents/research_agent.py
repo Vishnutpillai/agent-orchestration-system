@@ -38,7 +38,7 @@ Requirements:
             },
         ],
         temperature=0.2,
-        max_tokens=350,
+        max_tokens=900,
     )
     print(f"[RESEARCH] finish_reason={response.choices[0].finish_reason}")
 
