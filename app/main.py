@@ -3,6 +3,8 @@ from pydantic import BaseModel
 
 from app.core.graph import agent_graph
 
+from app.tools import tool_registry
+
 
 app = FastAPI(
     title="Agent Orchestration System",
@@ -42,4 +44,10 @@ def run_agent(request: TaskRequest):
             "final_response",
             "",
         ),
+    }
+@app.get("/tools")
+def list_tools():
+
+    return {
+        "tools": tool_registry.list_tools()
     }

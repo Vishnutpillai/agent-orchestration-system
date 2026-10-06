@@ -21,7 +21,7 @@ def reviewer_node(state):
         })
 
     prompt = f"""
-Review the following AI task results.
+Review the specialist outputs for this task.
 
 TASK:
 {task}
@@ -29,7 +29,7 @@ TASK:
 RESULTS:
 {json.dumps(compact_results, ensure_ascii=False)}
 
-Return ONLY this JSON object:
+Return ONLY JSON:
 
 {{
   "approved": true,
@@ -38,10 +38,9 @@ Return ONLY this JSON object:
 }}
 
 Rules:
-- approved must be true or false
-- confidence must be between 0 and 1
-- feedback must be short
-- JSON only
+- approved: boolean
+- confidence: number from 0 to 1
+- feedback: short
 - no markdown
 - no code fences
 """
@@ -57,8 +56,8 @@ Rules:
             {
                 "role": "system",
                 "content": (
-                    "Return only a valid JSON object. "
-                    "Do not include markdown."
+                    "Return only a small valid JSON object. "
+                    "Do not explain your reasoning."
                 ),
             },
             {
@@ -67,7 +66,10 @@ Rules:
             },
         ],
         temperature=0,
-        max_tokens=200,
+        max_tokens=600,
+        response_format={
+            "type": "json_object"
+        },
     )
 
     choice = response.choices[0]
@@ -81,56 +83,54 @@ Rules:
 
     if not content:
         raise RuntimeError(
-            "Reviewer returned an empty response."
+            f"Reviewer returned an empty response. "
+            f"finish_reason={choice.finish_reason}"
         )
 
     print("\n===== REVIEWER RESPONSE =====")
     print(content)
     print("==============================\n")
 
-    # Remove accidental markdown fences
-    content = content.strip()
-
-    if content.startswith("```"):
-        content = content.replace("```json", "")
-        content = content.replace("```", "")
-        content = content.strip()
-
     try:
         review = json.loads(content)
-
     except json.JSONDecodeError as exc:
-        print("INVALID REVIEW JSON:")
-        print(content)
+        raise RuntimeError(
+            f"Reviewer returned invalid JSON: {content}"
+        ) from exc
 
-        # Safe fallback instead of crashing entire graph
-        review = {
-            "approved": True,
-            "confidence": 0.5,
-            "feedback": "Reviewer returned an invalid JSON response."
-        }
+    if "approved" not in review:
+        raise RuntimeError(
+            "Reviewer response is missing 'approved'."
+        )
 
-    if not isinstance(review.get("approved"), bool):
-        review["approved"] = True
+    if "confidence" not in review:
+        raise RuntimeError(
+            "Reviewer response is missing 'confidence'."
+        )
+
+    if "feedback" not in review:
+        raise RuntimeError(
+            "Reviewer response is missing 'feedback'."
+        )
+
+    if not isinstance(review["approved"], bool):
+        raise RuntimeError(
+            "Reviewer 'approved' must be boolean."
+        )
 
     try:
-        review["confidence"] = float(
-            review.get("confidence", 0.5)
-        )
-    except (TypeError, ValueError):
-        review["confidence"] = 0.5
+        confidence = float(review["confidence"])
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError(
+            "Reviewer 'confidence' must be a number."
+        ) from exc
 
-    review["confidence"] = max(
-        0.0,
-        min(1.0, review["confidence"])
-    )
-
-    review["feedback"] = str(
-        review.get(
-            "feedback",
-            "Review completed."
+    if not 0 <= confidence <= 1:
+        raise RuntimeError(
+            "Reviewer 'confidence' must be between 0 and 1."
         )
-    )[:500]
+
+    review["confidence"] = confidence
 
     return {
         "review": review

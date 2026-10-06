@@ -1,0 +1,5 @@
+Agent Orchestration System
+
+This is a sample file used to test the File Read Tool.
+
+The tool registry can now provide file contents to agents.
