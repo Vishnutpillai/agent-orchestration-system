@@ -28,3 +28,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Runtime data
+app/data/memory.json
+app/data/test_output_*.txt

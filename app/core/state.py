@@ -27,3 +27,12 @@ class AgentState(TypedDict, total=False):
 
     # Final answer
     final_response: str
+
+        # Memory information
+    memory_id: str
+
+    # Tool execution history
+    tool_history: Annotated[
+        List[Dict[str, Any]],
+        operator.add
+    ]
