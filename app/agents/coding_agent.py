@@ -2,10 +2,7 @@ import json
 import os
 
 from app.core.llm import get_llm
-from app.tools.tool_agent import (
-    choose_tool,
-    execute_tool_decision,
-)
+from app.tools.tool_agent import choose_tool
 
 
 def coding_agent_node(state):
@@ -59,21 +56,17 @@ def coding_agent_node(state):
         "=================================\n"
     )
 
-    # --------------------------------------------------
-    # Execute selected tool
-    # --------------------------------------------------
+# --------------------------------------------------
+# Tool execution is handled by tool_loop.
+# Coding agent must never execute tools directly.
+# --------------------------------------------------
 
-    tool_result = execute_tool_decision(
-        decision
-    )
-
-    print(
-        "\n===== TOOL RESULT ====="
-    )
-    print(tool_result)
-    print(
-        "=======================\n"
-    )
+    tool_result = {
+        "used": False,
+        "tool_name": decision.get("tool_name"),
+        "result": None,
+        "status": "pending_tool_loop",
+    }
 
     # --------------------------------------------------
     # Build final coding prompt

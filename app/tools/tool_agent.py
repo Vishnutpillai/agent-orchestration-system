@@ -5,7 +5,7 @@ from app.core.llm import get_llm
 from app.tools import tool_registry
 
 
-def choose_tool(task: str):
+def choose_tool(task: str, context=None):
 
     task_lower = task.lower().strip()
 
@@ -58,7 +58,9 @@ Return ONLY JSON.
             messages=[
                 {
                     "role": "system",
-                    "content": "Convert math instructions into calculator expressions."
+                    "content": (
+                        "Convert math instructions into calculator expressions."
+                    ),
                 },
                 {
                     "role": "user",
@@ -87,9 +89,7 @@ Return ONLY JSON.
         print(content)
         print("===============================\n")
 
-        decision = json.loads(content)
-
-        return decision
+        return json.loads(content)
 
     # --------------------------------------------------
     # File read detection
@@ -115,11 +115,39 @@ Return ONLY JSON.
         "write to file" in task_lower
         or "write a file" in task_lower
         or "create a file" in task_lower
+        or "write the text" in task_lower
     ):
+        path_match = re.search(
+            r"(?:file called|file named|to)\s+[`'\"]?([A-Za-z0-9_.\\/-]+)[`'\"]?",
+            task,
+            re.IGNORECASE,
+        )
+
+        content_match = re.search(
+            r"write (?:the text|string)\s+(.+?)\s+to (?:a )?file",
+            task,
+            re.IGNORECASE,
+        )
+
+        path = (
+            path_match.group(1)
+            if path_match
+            else "output.txt"
+        )
+
+        content = (
+            content_match.group(1).strip(" '\"")
+            if content_match
+            else "Hello Agent 15"
+        )
+
         return {
             "use_tool": True,
             "tool_name": "file_write",
-            "arguments": {},
+            "arguments": {
+                "path": path,
+                "content": content,
+            },
             "reason": "The task requires writing a file.",
         }
 
@@ -141,7 +169,7 @@ Return ONLY JSON.
         }
 
     # --------------------------------------------------
-    # Normal ML / research / coding task
+    # No external tool
     # --------------------------------------------------
 
     return {
