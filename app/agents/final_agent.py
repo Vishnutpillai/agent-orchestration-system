@@ -1,3 +1,4 @@
+
 import json
 import os
 
@@ -5,54 +6,62 @@ from app.core.llm import get_llm
 
 
 def final_agent_node(state):
-
-    task = state["task"]
+    task = state.get("task", "")
     results = state.get("results", [])
     review = state.get("review", {})
 
-    llm = get_llm()
-
-    model = os.getenv(
-        "GROQ_MODEL",
-        "openai/gpt-oss-20b"
-    )
-
+    # Keep the final prompt compact.
     compact_results = []
 
     for result in results:
+        if not isinstance(result, dict):
+            continue
 
         compact_results.append({
-            "agent": result.get("agent", ""),
-            "task": result.get("task", ""),
-            "output": result.get("output", "")[:3000],
+            "agent": str(result.get("agent", "")),
+            "task": str(result.get("task", ""))[:300],
+            "output": str(result.get("output", ""))[:1200],
         })
+
+    # File-reading tasks can return the actual file contents directly.
+    task_lower = task.lower()
+    is_file_read = (
+        "read the contents of" in task_lower
+        or "read the content of" in task_lower
+        or "read readme" in task_lower
+        or "read file" in task_lower
+    )
+
+    for result in results:
+        if not isinstance(result, dict):
+            continue
+
+        tool_used = result.get("tool_used") or {}
+
+        if (
+            is_file_read
+            and tool_used.get("tool_name") == "file_read"
+            and tool_used.get("used") is True
+            and not tool_used.get("error")
+        ):
+            content = tool_used.get("result")
+
+            if content:
+                return {
+                    "final_response": str(content)
+                }
+
+    # For other tasks, ask the model to synthesize the results.
+    llm = get_llm()
+    model = os.getenv(
+        "GROQ_MODEL",
+        "openai/gpt-oss-20b",
+    )
 
     approved = review.get("approved", True)
 
-    if approved:
-
-        review_instruction = """
-The reviewer approved the specialist results.
-
-Create the best final answer using the available results.
-"""
-
-    else:
-
-        review_instruction = """
-The reviewer did NOT approve the specialist results.
-
-Do not pretend that the task is fully completed.
-
-Clearly explain what is missing or needs improvement based on
-the review feedback.
-
-If the available results are still useful, provide them while
-clearly identifying the limitation.
-"""
-
     prompt = f"""
-You are the final response writer in a multi-agent AI system.
+Answer the user's original task using the available results.
 
 USER TASK:
 {task}
@@ -63,23 +72,15 @@ SPECIALIST RESULTS:
 REVIEW:
 {json.dumps(review, ensure_ascii=False)}
 
-REVIEW STATUS:
-approved = {approved}
+Reviewer approved: {approved}
 
-{review_instruction}
-
-Instructions:
-
-1. Answer the user's original task directly.
-2. Use the useful information from the specialist results.
-3. Respect the reviewer decision.
-4. Do not claim something is complete if the reviewer rejected it.
-5. Do not mention internal agent names.
-6. Do not mention LangGraph or orchestration internals.
-7. Do not invent information.
-8. Preserve useful Python code when provided.
-9. Use clear headings and code blocks where appropriate.
-10. Keep the answer concise but useful.
+Rules:
+- Answer directly and accurately.
+- Do not invent missing information.
+- If the reviewer rejected the results, explain the limitations.
+- Preserve useful code when relevant.
+- Do not mention internal agent names or orchestration details.
+- Keep the answer concise.
 """
 
     response = llm.chat.completions.create(
@@ -88,9 +89,9 @@ Instructions:
             {
                 "role": "system",
                 "content": (
-                    "You are a professional final-answer writer. "
-                    "Produce accurate, useful answers and respect "
-                    "the quality-control review."
+                    "Provide a concise, useful final answer. "
+                    "Never invent facts or claim incomplete work "
+                    "is complete."
                 ),
             },
             {
@@ -99,21 +100,20 @@ Instructions:
             },
         ],
         temperature=0.2,
-        max_tokens=1800,
+        max_tokens=1200,
     )
 
-    print(
-        f"[FINAL] finish_reason="
-        f"{response.choices[0].finish_reason}"
-    )
+    choice = response.choices[0]
+    output = choice.message.content
 
-    output = response.choices[0].message.content
+    print(f"[FINAL] finish_reason={choice.finish_reason}")
 
-    if not output:
+    if not output or not output.strip():
         raise RuntimeError(
-            "Final agent returned an empty response."
+            "Final agent returned an empty response. "
+            f"finish_reason={choice.finish_reason}"
         )
 
     return {
-        "final_response": output
+        "final_response": output.strip()
     }

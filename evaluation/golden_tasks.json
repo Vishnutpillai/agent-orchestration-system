@@ -1,0 +1,72 @@
+[
+{
+"id": "calc_001",
+"category": "calculator",
+"task": "Calculate 50 multiplied by 3 and then add 20.",
+"expected_tool": "calculator",
+"expected_result": "170"
+},
+{
+"id": "calc_002",
+"category": "calculator",
+"task": "Calculate 125 plus 275.",
+"expected_tool": "calculator",
+"expected_result": "400"
+},
+{
+"id": "calc_003",
+"category": "calculator",
+"task": "What is 144 divided by 12?",
+"expected_tool": "calculator",
+"expected_result": "12"
+},
+{
+"id": "research_001",
+"category": "research",
+"task": "Explain how machine learning works in simple terms.",
+"expected_tool": null,
+"expected_result": null
+},
+{
+"id": "research_002",
+"category": "research",
+"task": "Explain three practical applications of artificial intelligence.",
+"expected_tool": null,
+"expected_result": null
+},
+{
+"id": "coding_001",
+"category": "coding",
+"task": "Explain nested if statements in Python with a simple example.",
+"expected_tool": null,
+"expected_result": null
+},
+{
+"id": "coding_002",
+"category": "coding",
+"task": "Write a Python function that returns the square of a number.",
+"expected_tool": null,
+"expected_result": null
+},
+{
+"id": "file_write_001",
+"category": "file_write",
+"task": "Write the text Phase 5 evaluation test to a file called evaluation_test.txt",
+"expected_tool": "file_write",
+"expected_result": "Phase 5 evaluation test"
+},
+{
+"id": "file_read_001",
+"category": "file_read",
+"task": "Read the contents of README.md",
+"expected_tool": "file_read",
+"expected_result": null
+},
+{
+"id": "multistep_001",
+"category": "multistep",
+"task": "Calculate 20 multiplied by 5, then add 15.",
+"expected_tool": "calculator",
+"expected_result": "115"
+}
+]
