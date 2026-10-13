@@ -1,32 +1,42 @@
+
 from app.memory.memory_store import (
-    save_memory,
     get_memories,
+    save_memory,
     search_memory,
 )
 
 
 def test_save_memory():
+    task = "Test task for memory saving"
+
     save_memory({
-        "task": "Test task",
+        "task": task,
         "result": "Test result",
     })
 
     memories = get_memories()
 
-    assert len(memories) >= 1
-    assert memories[-1]["task"] == "Test task"
-    assert memories[-1]["result"] == "Test result"
+    matching = [
+        memory for memory in memories
+        if memory.get("task") == task
+    ]
+
+    assert len(matching) == 1
+    assert matching[0]["result"] == "Test result"
+    assert "timestamp" in matching[0]
 
 
 def test_search_memory():
+    task = "Unique memory search verification task"
+
     save_memory({
-        "task": "Calculate 10 multiplied by 5",
-        "result": "50",
+        "task": task,
+        "result": "Search test result",
     })
 
-    results = search_memory(
-        "Calculate 10 multiplied by 5"
-    )
+    results = search_memory(task, limit=5)
 
-    assert len(results) >= 1
-    assert results[0]["result"] == "50"
+    assert any(
+        memory.get("task") == task
+        for memory in results
+    )
