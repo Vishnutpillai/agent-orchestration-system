@@ -136,11 +136,21 @@ def tool_loop_node(state):
     # ADD TOOL RESULT TO SHARED RESULTS
     # -----------------------------------------------------
 
+    if tool_result.get("error"):
+        output = (
+            f"Tool execution failed: {tool_result['error']}"
+        )
+        status = "failed"
+    else:
+        output = str(tool_result.get("result"))
+        status = "success"
+
     results.append(
         {
             "agent": "tool",
             "task": task,
-            "output": str(tool_result.get("result")),
+            "output": output,
+            "status": status,
             "tool_used": tool_result,
         }
     )

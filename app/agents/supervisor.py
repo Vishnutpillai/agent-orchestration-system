@@ -3,6 +3,33 @@ import os
 
 from app.core.llm import get_llm
 
+def validate_plan(plan):
+    """Validate the structure and size of a supervisor-generated plan."""
+
+    if not isinstance(plan, list):
+        raise RuntimeError("Supervisor 'plan' must be a list.")
+
+    if not 1 <= len(plan) <= 5:
+        raise RuntimeError(
+            "Supervisor plan must contain between 1 and 5 steps."
+        )
+
+    allowed_agents = {"research", "data", "coding"}
+
+    for index, item in enumerate(plan, start=1):
+        if not isinstance(item, dict):
+            raise RuntimeError(
+                f"Supervisor plan step {index} must be an object."
+            )
+
+        specialist = item.get("specialist")
+
+        if specialist not in allowed_agents:
+            raise RuntimeError(
+                f"Invalid specialist in plan step {index}: {specialist}"
+            )
+
+    return plan
 
 def supervisor_node(state):
 
@@ -122,7 +149,19 @@ Rules:
             "Supervisor JSON does not contain a 'plan' field."
         )
 
-    plan = data["plan"]
+    plan = validate_plan(data["plan"])
+
+    return {
+        "plan": plan,
+        "current_step": 0,
+    }
+
+    plan = validate_plan(data["plan"])
+
+    return {
+        "plan": plan,
+        "current_step": 0,
+        }
 
     if not isinstance(plan, list):
         raise RuntimeError(

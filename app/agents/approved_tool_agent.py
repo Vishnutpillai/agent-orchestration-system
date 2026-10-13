@@ -4,32 +4,64 @@ from app.tools.tool_agent import execute_tool_decision
 def execute_approved_tool_node(state):
     """
     Execute a tool only after human approval.
+    Record both successful and failed outcomes explicitly.
     """
 
     decision = state.get("tool_decision", {})
+    results = list(state.get("results", []))
+    task = state.get("task", "")
+
+    # --------------------------------------------------------
+    # HUMAN REJECTED OR DID NOT APPROVE THE ACTION
+    # --------------------------------------------------------
 
     if state.get("human_decision") != "approved":
-        return {
-            "tool_result": {
-                "used": False,
-                "tool_name": decision.get("tool_name"),
-                "result": None,
-                "error": "Tool execution was not approved.",
-            },
-            "continue_tool_loop": False,
+        tool_result = {
+            "used": False,
+            "tool_name": decision.get("tool_name"),
+            "result": None,
+            "error": "Tool execution was not approved.",
         }
 
-    tool_result = execute_tool_decision(decision)
+        results.append(
+            {
+                "agent": "tool",
+                "task": task,
+                "output": "Tool execution failed: action not approved.",
+                "status": "failed",
+                "tool_used": tool_result,
+            }
+        )
 
+        return {
+            "results": results,
+            "tool_result": tool_result,
+            "continue_tool_loop": False,
+            "requires_human": False,
+        }
+
+    # --------------------------------------------------------
+    # EXECUTE APPROVED TOOL
+    # --------------------------------------------------------
+
+    tool_result = execute_tool_decision(decision)
     tool_calls = state.get("tool_calls", 0) + 1
 
-    results = list(state.get("results", []))
+    if tool_result.get("error"):
+        output = (
+            f"Tool execution failed: {tool_result['error']}"
+        )
+        status = "failed"
+    else:
+        output = str(tool_result.get("result"))
+        status = "success"
 
     results.append(
         {
             "agent": "tool",
-            "task": state.get("task", ""),
-            "output": str(tool_result.get("result")),
+            "task": task,
+            "output": output,
+            "status": status,
             "tool_used": tool_result,
         }
     )
