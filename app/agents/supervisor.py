@@ -156,7 +156,6 @@ Rules:
         "current_step": 0,
     }
 
-    plan = validate_plan(data["plan"])
 
     return {
         "plan": plan,
