@@ -32,3 +32,24 @@ Thumbs.db
 # Runtime data
 app/data/memory.json
 app/data/test_output_*.txt
+
+# Local databases and runtime state
+data/
+*.sqlite
+*.sqlite3
+*.db
+
+# Temporary backups
+*.bak
+*.phase8_backup
+
+# Local test outputs
+approval_test.txt
+persistence_test.txt
+rejected_test.txt
+test_output.txt
+
+# Python environment files
+.env
+.env.*
+!.env.example

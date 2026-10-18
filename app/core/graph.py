@@ -2,6 +2,9 @@ import re
 
 from langgraph.graph import StateGraph, START, END
 
+from langgraph.checkpoint.sqlite import SqliteSaver
+import sqlite3
+from pathlib import Path
 from app.core.state import AgentState
 
 from app.agents.supervisor import supervisor_node
@@ -218,7 +221,23 @@ def build_graph():
     graph.add_edge("final", "memory_save")
     graph.add_edge("memory_save", END)
 
-    return graph.compile()
+    return graph.compile(checkpointer=checkpoint_saver)
 
+
+# =========================================================
+# PERSISTENT SQLITE CHECKPOINT STORAGE
+# =========================================================
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+CHECKPOINT_DIR = PROJECT_ROOT / "data"
+CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
+
+checkpoint_connection = sqlite3.connect(
+    str(CHECKPOINT_DIR / "checkpoints.sqlite"),
+    check_same_thread=False,
+)
+
+checkpoint_saver = SqliteSaver(checkpoint_connection)
+checkpoint_saver.setup()
 
 agent_graph = build_graph()

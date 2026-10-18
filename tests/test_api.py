@@ -18,7 +18,8 @@ def test_root_endpoint():
 
 def test_run_returns_expected_response_shape(monkeypatch):
     def fake_invoke(state, config=None):
-        assert config == {"recursion_limit": 25}
+        assert config["recursion_limit"] == 25
+        assert config["configurable"]["thread_id"]
         return {
             "plan": [],
             "results": [{"content": "Example result"}],
