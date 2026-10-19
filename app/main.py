@@ -1,5 +1,6 @@
 
 import logging
+import time
 import uuid
 
 from fastapi import FastAPI, HTTPException
@@ -8,10 +9,20 @@ from langgraph.types import Command
 
 from app.core.graph import agent_graph
 from app.tools import tool_registry
+from app.observability.logging_config import configure_logging
 
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# =========================================================
+# LOGGING CONFIGURATION
+# =========================================================
+
+configure_logging()
+logger = logging.getLogger("agent15")
+
+
+# =========================================================
+# FASTAPI APPLICATION
+# =========================================================
 
 app = FastAPI(
     title="Agent Orchestration System",
@@ -50,7 +61,6 @@ def workflow_config(thread_id: str) -> dict:
 # RESPONSE FORMATTING
 # =========================================================
 
-
 def workflow_response(
     result: dict,
     thread_id: str,
@@ -83,13 +93,20 @@ def workflow_response(
     }
 
 
-
 # =========================================================
 # HEALTH CHECK
 # =========================================================
 
 @app.get("/")
 def root():
+    logger.info(
+        "Health check requested",
+        extra={
+            "event": "health_check",
+            "status": "running",
+        },
+    )
+
     return {
         "message": "Agent Orchestration System API",
         "status": "running",
@@ -110,9 +127,18 @@ def run_agent(request: TaskRequest):
             detail="Task must not be empty or whitespace only.",
         )
 
-    # Each workflow gets its own persistent-in-process checkpoint ID.
     thread_id = str(uuid.uuid4())
     config = workflow_config(thread_id)
+    started_at = time.perf_counter()
+
+    logger.info(
+        "Workflow started",
+        extra={
+            "event": "workflow_started",
+            "thread_id": thread_id,
+            "status": "started",
+        },
+    )
 
     try:
         result = agent_graph.invoke(
@@ -125,12 +151,46 @@ def run_agent(request: TaskRequest):
         )
 
         if not isinstance(result, dict):
-            raise RuntimeError("Workflow returned an invalid result.")
+            raise RuntimeError(
+                "Workflow returned an invalid result."
+            )
 
-        return workflow_response(result, thread_id, task)
+        response = workflow_response(
+            result,
+            thread_id,
+            task,
+        )
 
-    except Exception:
-        logger.exception("Agent workflow failed.")
+        logger.info(
+            "Workflow finished",
+            extra={
+                "event": "workflow_finished",
+                "thread_id": thread_id,
+                "duration_ms": round(
+                    (time.perf_counter() - started_at) * 1000,
+                    2,
+                ),
+                "status": response["status"],
+            },
+        )
+
+        return response
+
+    except Exception as exc:
+        logger.exception(
+            "Agent workflow failed",
+            extra={
+                "event": "workflow_failed",
+                "thread_id": thread_id,
+                "duration_ms": round(
+                    (time.perf_counter() - started_at) * 1000,
+                    2,
+                ),
+                "status": "failed",
+                "error_type": type(exc).__name__,
+            },
+        )
+
         raise HTTPException(
             status_code=503,
             detail=(
@@ -158,6 +218,16 @@ def decide_approval(
         )
 
     config = workflow_config(thread_id)
+    started_at = time.perf_counter()
+
+    logger.info(
+        "Approval decision received",
+        extra={
+            "event": "approval_decision_received",
+            "thread_id": thread_id,
+            "status": decision,
+        },
+    )
 
     try:
         # Find the saved workflow checkpoint.
@@ -172,10 +242,12 @@ def decide_approval(
         if "human_review" not in snapshot.next:
             raise HTTPException(
                 status_code=409,
-                detail="This workflow is not waiting for human approval.",
+                detail=(
+                    "This workflow is not waiting for human approval."
+                ),
             )
 
-        # Resume the SAME workflow with the user's explicit decision.
+        # Resume the same workflow with the explicit decision.
         result = agent_graph.invoke(
             Command(
                 resume={
@@ -187,19 +259,56 @@ def decide_approval(
         )
 
         if not isinstance(result, dict):
-            raise RuntimeError("Workflow returned an invalid result.")
+            raise RuntimeError(
+                "Workflow returned an invalid result."
+            )
 
-        return workflow_response(result, thread_id, result.get("task", ""))
+        response = workflow_response(
+            result,
+            thread_id,
+            result.get("task", ""),
+        )
+
+        logger.info(
+            "Approval workflow finished",
+            extra={
+                "event": "approval_workflow_finished",
+                "thread_id": thread_id,
+                "duration_ms": round(
+                    (time.perf_counter() - started_at) * 1000,
+                    2,
+                ),
+                "status": response["status"],
+            },
+        )
+
+        return response
 
     except HTTPException:
         raise
-    except Exception:
-        logger.exception("Approval workflow failed.")
+
+    except Exception as exc:
+        logger.exception(
+            "Approval workflow failed",
+            extra={
+                "event": "approval_workflow_failed",
+                "thread_id": thread_id,
+                "duration_ms": round(
+                    (time.perf_counter() - started_at) * 1000,
+                    2,
+                ),
+                "status": "failed",
+                "error_type": type(exc).__name__,
+            },
+        )
+
         raise HTTPException(
             status_code=503,
-            detail="The workflow could not resume. Check the server logs.",
+            detail=(
+                "The workflow could not resume. "
+                "Check the server logs."
+            ),
         ) from None
-
 
 
 # =========================================================
@@ -210,6 +319,7 @@ def decide_approval(
 def get_run_status(thread_id: str):
     """Inspect a saved workflow without starting or resuming it."""
 
+    started_at = time.perf_counter()
     config = workflow_config(thread_id)
 
     try:
@@ -254,17 +364,45 @@ def get_run_status(thread_id: str):
                 for interrupt_item in task_snapshot.interrupts:
                     approval_request = interrupt_item.value
                     break
+
                 if approval_request is not None:
                     break
 
             response["approval_request"] = approval_request
 
+        logger.info(
+            "Workflow status retrieved",
+            extra={
+                "event": "workflow_status_retrieved",
+                "thread_id": thread_id,
+                "duration_ms": round(
+                    (time.perf_counter() - started_at) * 1000,
+                    2,
+                ),
+                "status": status,
+            },
+        )
+
         return response
 
     except HTTPException:
         raise
-    except Exception:
-        logger.exception("Could not retrieve workflow status.")
+
+    except Exception as exc:
+        logger.exception(
+            "Could not retrieve workflow status",
+            extra={
+                "event": "workflow_status_failed",
+                "thread_id": thread_id,
+                "duration_ms": round(
+                    (time.perf_counter() - started_at) * 1000,
+                    2,
+                ),
+                "status": "failed",
+                "error_type": type(exc).__name__,
+            },
+        )
+
         raise HTTPException(
             status_code=503,
             detail="Workflow status could not be retrieved.",
@@ -277,6 +415,14 @@ def get_run_status(thread_id: str):
 
 @app.get("/tools")
 def list_tools():
+    logger.info(
+        "Tool registry requested",
+        extra={
+            "event": "tools_listed",
+            "status": "success",
+        },
+    )
+
     return {
         "tools": tool_registry.list_tools(),
     }
