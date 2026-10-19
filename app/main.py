@@ -201,6 +201,76 @@ def decide_approval(
         ) from None
 
 
+
+# =========================================================
+# WORKFLOW STATUS
+# =========================================================
+
+@app.get("/runs/{thread_id}")
+def get_run_status(thread_id: str):
+    """Inspect a saved workflow without starting or resuming it."""
+
+    config = workflow_config(thread_id)
+
+    try:
+        snapshot = agent_graph.get_state(config)
+
+        # An unknown thread has no saved state.
+        if (
+            snapshot.metadata is None
+            and not snapshot.values
+            and not snapshot.next
+        ):
+            raise HTTPException(
+                status_code=404,
+                detail="No workflow was found for this thread.",
+            )
+
+        state = snapshot.values or {}
+        next_nodes = list(snapshot.next or [])
+
+        if "human_review" in next_nodes:
+            status = "approval_required"
+        elif not next_nodes:
+            status = "completed"
+        else:
+            status = "in_progress"
+
+        response = {
+            "thread_id": thread_id,
+            "status": status,
+            "task": state.get("task", ""),
+            "current_step": state.get("current_step", 0),
+            "plan": state.get("plan", []),
+            "results": state.get("results", []),
+            "next_nodes": next_nodes,
+        }
+
+        # Include the approval request when the workflow is paused.
+        if status == "approval_required":
+            approval_request = None
+
+            for task_snapshot in snapshot.tasks:
+                for interrupt_item in task_snapshot.interrupts:
+                    approval_request = interrupt_item.value
+                    break
+                if approval_request is not None:
+                    break
+
+            response["approval_request"] = approval_request
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Could not retrieve workflow status.")
+        raise HTTPException(
+            status_code=503,
+            detail="Workflow status could not be retrieved.",
+        ) from None
+
+
 # =========================================================
 # AVAILABLE TOOLS
 # =========================================================
