@@ -12,4 +12,4 @@ langchain-groq
 openai
 pandas
 groq
-langgraph-checkpoint-sqlitelanggraph-checkpoint-sqlite==3.1.2
+langgraph-checkpoint-sqlite==3.1.2

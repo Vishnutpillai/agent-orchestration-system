@@ -10,7 +10,7 @@
       "category": "calculator",
       "task": "Calculate 50 multiplied by 3 and then add 20.",
       "status": "PASS",
-      "duration_seconds": 2.34,
+      "duration_seconds": 2.93,
       "error": null,
       "output_preview": "The result is **170**.",
       "checks": {
@@ -24,9 +24,9 @@
       "category": "calculator",
       "task": "Calculate 125 plus 275.",
       "status": "PASS",
-      "duration_seconds": 2.45,
+      "duration_seconds": 2.96,
       "error": null,
-      "output_preview": "125 + 275 = 400",
+      "output_preview": "125 + 275 = 400.",
       "checks": {
         "expected_result_present": true,
         "calculator_used": true,
@@ -38,7 +38,7 @@
       "category": "calculator",
       "task": "What is 144 divided by 12?",
       "status": "PASS",
-      "duration_seconds": 2.17,
+      "duration_seconds": 2.61,
       "error": null,
       "output_preview": "12",
       "checks": {
@@ -52,9 +52,9 @@
       "category": "research",
       "task": "Explain how machine learning works in simple terms.",
       "status": "PASS",
-      "duration_seconds": 2.81,
+      "duration_seconds": 3.3,
       "error": null,
-      "output_preview": "Machine learning is a way for computers to learn from examples instead of being explicitly programmed for every task. In simple terms:\n\n- **Learning from data**: The computer looks at many examples (e.g., pictures of cats) and discovers patterns that help it recognize similar things later.\n- **Making predictions**: After learning, it can guess the correct label or outcome for new, unseen data (e.g., decide if a new picture is a cat).\n- **Improving over time**: With more data and feedback, its guesses become more accurate.\n- **Automating tasks**: This lets computers perform jobs that normally need human judgment, such as translating text, recommending movies, or spotting fraud.",
+      "output_preview": "Machine learning works by letting a computer learn patterns from data instead of being explicitly programmed for each task.  \n1. **Learning from data** – The computer looks at many examples and figures out regularities.  \n2. **Making predictions** – Once it has learned the pattern, it can guess the outcome for new, unseen data.  \n3. **Improving over time** – The more data it sees, the better its guesses become.  \n4. **Automating tasks** – This lets it perform jobs like recognizing images, translating text, or recommending products without being told exactly how to do each one.",
       "checks": {
         "non_empty_output": true
       }
@@ -64,9 +64,9 @@
       "category": "research",
       "task": "Explain three practical applications of artificial intelligence.",
       "status": "PASS",
-      "duration_seconds": 2.77,
+      "duration_seconds": 3.79,
       "error": null,
-      "output_preview": "**Three practical AI applications**\n\n- **Medical diagnostics** – AI models analyze medical images (X‑ray, MRI, CT, retinal scans) to detect tumors, fractures, or eye diseases quickly and with accuracy comparable to specialists.  \n- **Predictive maintenance in manufacturing** – Sensors feed data into anomaly‑detection algorithms that forecast equipment failures, reducing downtime and maintenance costs.  \n- **Personalized recommendation engines** – Machine‑learning systems sift through user behavior to suggest products, content, or services, boosting engagement and sales for e‑commerce and streaming platforms.",
+      "output_preview": "**Three practical applications of artificial intelligence**\n\n1. **Predictive maintenance in manufacturing** – AI models analyze sensor data to forecast equipment failures, reducing downtime and maintenance costs.  \n2. **Personalized medical diagnosis** – Machine‑learning algorithms interpret imaging and genomic data to suggest tailored treatment plans, improving patient outcomes.  \n3. **Intelligent customer support** – Chatbots and virtual assistants use natural‑language processing to resolve queries instantly, boosting service efficiency and satisfaction.",
       "checks": {
         "non_empty_output": true
       }
@@ -76,9 +76,9 @@
       "category": "coding",
       "task": "Explain nested if statements in Python with a simple example.",
       "status": "PASS",
-      "duration_seconds": 30.95,
+      "duration_seconds": 28.77,
       "error": null,
-      "output_preview": "**Nested `if` statements in Python**\n\nA nested `if` is an `if` placed inside the block of another `if`.  \n- The outer `if` is evaluated first.  \n- Only if it is `True` does Python enter its block and evaluate the inner `if`.  \n- Each level is indented (typically 4 spaces) to show the hierarchy.  \n- They are useful when several conditions must all be satisfied, e.g. `if a: if b: …` or `if a and b: …`.\n\n---\n\n### Simple example\n\n```python\ntemperature = 22   # degrees Celsius\nhumidity = 80      # percent\n\nif temperature > 20:          # outer condition\n    print(\"Warm day.\")\n    if humidity > 70:        # inner condition\n        print(\"High humidity – consider a fan.\")\n    else:\n        print(\"Humidity is fine.\")\nelse:\n    print(\"Cool day.\")\n```\n\n**Output**\n\n```\nWarm day.\nHigh humidity – consider a fan.\n```\n\nThe inner `if` runs only when the outer condition (`temperature > 20`) is `True`. If the outer condition were `False`, the inner block would never be evaluated. This pattern lets you test multiple, dependent conditions in a clear, hierarchical way.",
+      "output_preview": "**Nested `if` statements in Python**\n\nA nested `if` is an `if` placed inside the block of another `if`.  \nThe inner condition is evaluated only when the outer condition is true.\n\n```python\nif condition1:\n    # executed when condition1 is True\n    if condition2:\n        # executed when both condition1 and condition2 are True\n```\n\n* The inner `if` is indented further than the outer block.  \n* It runs only if the outer condition is satisfied; otherwise it is skipped.\n\n---\n\n### Simple example\n\n```python\ndef check_number(n):\n    if n > 0:\n        print(f\"{n} is positive.\")\n        if n % 2 == 0:\n            print(f\"{n} is also even.\")\n        else:\n            print(f\"{n} is odd.\")\n    else:\n        print(f\"{n} is not positive.\")\n\n# Test the function\ncheck_number(8)   # positive and even\ncheck_number(7)   # positive and odd\ncheck_number(-3)  # not positive\n```\n\n**Output**\n\n```\n8 is positive.\n8 is also even.\n7 is positive.\n7 is odd.\n-3 is not positive.\n```\n\nThe inner `if` (`n % 2 == 0`) runs only when the outer condition (`n > 0`) is true, illustrating how nested `if` statements work.",
       "checks": {
         "non_empty_output": true
       }
@@ -88,9 +88,9 @@
       "category": "coding",
       "task": "Write a Python function that returns the square of a number.",
       "status": "PASS",
-      "duration_seconds": 28.18,
+      "duration_seconds": 28.99,
       "error": null,
-      "output_preview": "Here’s a simple Python function that returns the square of a number:\n\n```python\ndef square(x: float) -> float:\n    \"\"\"Return the square of a number.\"\"\"\n    return x * x\n```\n\nThis works with integers, floats, or any numeric type that supports multiplication.",
+      "output_preview": "Here’s a simple Python function that returns the square of a number:\n\n```python\ndef square(x: float) -> float:\n    \"\"\"Return the square of a number.\"\"\"\n    return x * x\n```\n\n**Usage**\n\n```python\nprint(square(5))      # 25\nprint(square(3.2))    # 10.240000000000002\n```\n\nThe function works with integers, floats, and any numeric type that supports multiplication.",
       "checks": {
         "non_empty_output": true
       }
@@ -100,9 +100,9 @@
       "category": "file_write",
       "task": "Write the text Phase 5 evaluation test to a file called evaluation_test.txt",
       "status": "PASS",
-      "duration_seconds": 2.28,
+      "duration_seconds": 3.41,
       "error": null,
-      "output_preview": "The file **evaluation_test.txt** has been created with the requested content.",
+      "output_preview": "The file **evaluation_test.txt** has been created and contains the text for Phase 5 evaluation test.",
       "checks": {
         "expected_result_present": true,
         "file_write_tool_executed": true,
@@ -115,7 +115,7 @@
       "category": "file_read",
       "task": "Read the contents of README.md",
       "status": "PASS",
-      "duration_seconds": 2.55,
+      "duration_seconds": 2.12,
       "error": null,
       "output_preview": "Implemented:\n- FastAPI backend\n- Streamlit frontend\n- LangGraph workflow\n- LLM-powered supervisor\n- Task decomposition\n- Research Agent\n- Data Agent\n- Coding Agent\n- Reviewer Agent\n- Conditional agent routing\n- Multi-agent execution\n- Tool registry",
       "checks": {
@@ -129,7 +129,7 @@
       "category": "multistep",
       "task": "Calculate 20 multiplied by 5, then add 15.",
       "status": "PASS",
-      "duration_seconds": 27.17,
+      "duration_seconds": 29.09,
       "error": null,
       "output_preview": "115",
       "checks": {
