@@ -53,7 +53,9 @@
 "category": "file_write",
 "task": "Write the text Phase 5 evaluation test to a file called evaluation_test.txt",
 "expected_tool": "file_write",
-"expected_result": "Phase 5 evaluation test"
+"expected_result": "Phase 5 evaluation test",
+"auto_approve": true,
+"expected_file": "evaluation_test.txt"
 },
 {
 "id": "file_read_001",

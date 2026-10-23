@@ -1,0 +1,353 @@
+============================================================
+PROJECT 15 - EVALUATION RUNNER
+============================================================
+
+[1/10] calc_001
+Task: Calculate 50 multiplied by 3 and then add 20.
+
+===== MEMORY RETRIEVAL =====
+Found 5 relevant memories
+- Calculate 50 multiplied by 3 and then add 20.
+- Calculate 20 multiplied by 5, then add 15.
+- Calculate 25 multiplied by 4 and then add 10.
+- Calculate 25 multiplied by 4
+- Calculate 10 multiplied by 5
+============================
+
+
+===== SUPERVISOR RESPONSE =====
+{"plan":[{"id":1,"specialist":"coding","description":"Compute 50 * 3 + 20","required_inputs":[],"expected_output":"Result of calculation","complexity":"low","status":"pending"}]}
+================================
+
+[REVIEWER] finish_reason=stop
+
+===== REVIEWER RESPONSE =====
+{"approved":false,"confidence":0.2,"feedback":"No output provided"}
+==============================
+
+[FINAL] finish_reason=stop
+
+===== MEMORY SAVED =====
+Task: Calculate 50 multiplied by 3 and then add 20.
+========================
+
+Status: FAIL
+Duration: 5.08 seconds
+Checks: {'expected_result_present': True, 'calculator_used': False, 'calculator_result_present': True}
+
+[2/10] calc_002
+Task: Calculate 125 plus 275.
+
+===== MEMORY RETRIEVAL =====
+Found 5 relevant memories
+- Calculate 125 plus 275.
+- Calculate 25 multiplied by 4
+- Calculate 10 multiplied by 5
+- Calculate 20 multiplied by 5, then add 15.
+- Calculate 50 multiplied by 3 and then add 20.
+============================
+
+
+===== SUPERVISOR RESPONSE =====
+{"plan":[{"id":1,"specialist":"coding","description":"Compute 125 + 275","required_inputs":[],"expected_output":"400","complexity":"low","status":"pending"}]}
+================================
+
+[REVIEWER] finish_reason=stop
+
+===== REVIEWER RESPONSE =====
+{"approved":true,"confidence":0.95,"feedback":"No specialist outputs; calculation straightforward."}
+==============================
+
+[FINAL] finish_reason=stop
+
+===== MEMORY SAVED =====
+Task: Calculate 125 plus 275.
+========================
+
+Status: FAIL
+Duration: 3.04 seconds
+Checks: {'expected_result_present': True, 'calculator_used': False, 'calculator_result_present': True}
+
+[3/10] calc_003
+Task: What is 144 divided by 12?
+
+===== MEMORY RETRIEVAL =====
+Found 5 relevant memories
+- What is 144 divided by 12?
+- Calculate 25 multiplied by 4
+- Calculate 10 multiplied by 5
+- Calculate 20 multiplied by 5, then add 15.
+- Calculate 50 multiplied by 3 and then add 20.
+============================
+
+
+===== SUPERVISOR RESPONSE =====
+{"plan":[{"id":1,"specialist":"research","description":"Compute 144 divided by 12","required_inputs":[],"expected_output":"Answer to the division","complexity":"low","status":"pending"}]}
+================================
+
+[REVIEWER] finish_reason=stop
+
+===== REVIEWER RESPONSE =====
+{"approved":true,"confidence":0.95,"feedback":"No specialist outputs; answer is 12."}
+==============================
+
+[FINAL] finish_reason=stop
+
+===== MEMORY SAVED =====
+Task: What is 144 divided by 12?
+========================
+
+Status: FAIL
+Duration: 2.71 seconds
+Checks: {'expected_result_present': True, 'calculator_used': False, 'calculator_result_present': True}
+
+[4/10] research_001
+Task: Explain how machine learning works in simple terms.
+
+===== MEMORY RETRIEVAL =====
+Found 5 relevant memories
+- Explain how machine learning works in simple terms.
+- Explain how machine learning works
+- Explain nested if statements in Python with a simple example.
+- Explain Python functions with a simple example.
+- wirte a machine learning project with sales data
+============================
+
+
+===== SUPERVISOR RESPONSE =====
+{"plan":[{"id":1,"specialist":"research","description":"Explain machine learning in simple terms","required_inputs":[],"expected_output":"simple explanation of machine learning","complexity":"low","status":"pending"}]}
+================================
+
+[RESEARCH] finish_reason=stop
+[REVIEWER] finish_reason=stop
+
+===== REVIEWER RESPONSE =====
+{"approved":true,"confidence":0.95,"feedback":"Clear and concise."}
+==============================
+
+[FINAL] finish_reason=stop
+
+===== MEMORY SAVED =====
+Task: Explain how machine learning works in simple terms.
+========================
+
+Status: PASS
+Duration: 3.47 seconds
+Checks: {'non_empty_output': True}
+
+[5/10] research_002
+Task: Explain three practical applications of artificial intelligence.
+
+===== MEMORY RETRIEVAL =====
+Found 5 relevant memories
+- Explain three practical applications of artificial intelligence.
+- Explain how machine learning works
+- create a EDA of sales data
+- Read the contents of README.md
+- Explain Python functions with a simple example.
+============================
+
+
+===== SUPERVISOR RESPONSE =====
+{"plan":[{"id":1,"specialist":"research","description":"Explain three practical AI applications","required_inputs":[],"expected_output":"Three AI application explanations","complexity":"low","status":"pending"}]}
+================================
+
+[RESEARCH] finish_reason=stop
+[REVIEWER] finish_reason=stop
+
+===== REVIEWER RESPONSE =====
+{"approved":true,"confidence":0.95,"feedback":"Clear and relevant"}
+==============================
+
+[FINAL] finish_reason=stop
+
+===== MEMORY SAVED =====
+Task: Explain three practical applications of artificial intelligence.
+========================
+
+Status: PASS
+Duration: 3.99 seconds
+Checks: {'non_empty_output': True}
+
+[6/10] coding_001
+Task: Explain nested if statements in Python with a simple example.
+
+===== MEMORY RETRIEVAL =====
+Found 5 relevant memories
+- Explain nested if statements in Python with a simple example.
+- Explain Python functions with a simple example.
+- wirte a simple python code any
+- Explain how machine learning works in simple terms.
+- wirte a machine learning project with sales data
+============================
+
+
+===== SUPERVISOR RESPONSE =====
+{"plan":[{"id":1,"specialist":"research","description":"Explain nested if statements in Python","required_inputs":[],"expected_output":"Explanation of nested if statements","complexity":"low","status":"pending"},{"id":2,"specialist":"coding","description":"Provide a simple example of nested if statements","required_inputs":[1],"expected_output":"Python code example","complexity":"low","status":"pending"}]}
+================================
+
+Groq rate limit reached. Waiting 21s before retry (1/3)...
+[RESEARCH] finish_reason=stop
+
+===== CODING TOOL DECISION =====
+{'use_tool': False, 'tool_name': None, 'arguments': {}, 'reason': 'No external tool is required for this task.'}
+=================================
+
+[CODING] finish_reason=stop
+
+===== TOOL LOOP DECISION =====
+{'use_tool': False, 'tool_name': None, 'arguments': {}, 'reason': 'No external tool is required for this task.'}
+==============================
+
+[REVIEWER] finish_reason=stop
+
+===== REVIEWER RESPONSE =====
+{"approved":true,"confidence":0.95,"feedback":"Clear explanation with example."}
+==============================
+
+[FINAL] finish_reason=stop
+
+===== MEMORY SAVED =====
+Task: Explain nested if statements in Python with a simple example.
+========================
+
+Status: PASS
+Duration: 26.92 seconds
+Checks: {'non_empty_output': True}
+
+[7/10] coding_002
+Task: Write a Python function that returns the square of a number.
+
+===== MEMORY RETRIEVAL =====
+Found 5 relevant memories
+- Write a Python function that returns the square of a number.
+- Write the text Persistence test to a file called persistence_test.txt
+- Write the text Hello Agent 15 to a file called test_output.txt
+- Write the text Hello Agent 15 to a file called test_outputs.txt
+- Write the text Hello Agent 15 to a file called test_final.txt
+============================
+
+
+===== SUPERVISOR RESPONSE =====
+{"plan":[{"id":1,"specialist":"coding","description":"Implement function to return square of a number","required_inputs":[],"expected_output":"Python function that returns square","complexity":"low","status":"pending"}]}
+================================
+
+
+===== CODING TOOL DECISION =====
+{'use_tool': False, 'tool_name': None, 'arguments': {}, 'reason': 'No external tool is required for this task.'}
+=================================
+
+Groq rate limit reached. Waiting 20s before retry (1/3)...
+Status: FAIL
+Duration: 33.91 seconds
+Error: APITimeoutError: Request timed out.
+
+[8/10] file_write_001
+Task: Write the text Phase 5 evaluation test to a file called evaluation_test.txt
+
+===== MEMORY RETRIEVAL =====
+Found 5 relevant memories
+- Write the text Phase 5 evaluation test to a file called evaluation_test.txt
+- Write the text Persistence test to a file called persistence_test.txt
+- Write the text Agent 15 API Test to a file called api_demo.txt
+- Write the text Hello Agent 15 to a file called test_output.txt
+- Write the text Hello Agent 15 to a file called test_outputs.txt
+============================
+
+Status: FAIL
+Duration: 5.62 seconds
+Error: APITimeoutError: Request timed out.
+
+[9/10] file_read_001
+Task: Read the contents of README.md
+
+===== MEMORY RETRIEVAL =====
+Found 5 relevant memories
+- Read the contents of README.md
+- Write a Python function that returns the square of a number.
+- create a EDA of sales data
+- Explain three practical applications of artificial intelligence.
+- Write the text Persistence test to a file called persistence_test.txt
+============================
+
+
+===== SUPERVISOR RESPONSE =====
+{"plan":[{"id":1,"specialist":"research","description":"Read README.md","required_inputs":["README.md"],"expected_output":"Contents of README.md","complexity":"low","status":"pending"}]}
+================================
+
+
+===== TOOL LOOP DECISION =====
+{'use_tool': True, 'tool_name': 'file_read', 'arguments': {'path': 'README.md'}, 'reason': 'The task requires reading a file.'}
+==============================
+
+
+===== TOOL LOOP RESULT =====
+{'used': True, 'tool_name': 'file_read', 'result': 'Implemented:\n- FastAPI backend\n- Streamlit frontend\n- LangGraph workflow\n- LLM-powered supervisor\n- Task decomposition\n- Research Agent\n- Data Agent\n- Coding Agent\n- Reviewer Agent\n- Conditional agent routing\n- Multi-agent execution\n- Tool registry'}
+============================
+
+[REVIEWER] finish_reason=stop
+
+===== REVIEWER RESPONSE =====
+{"approved":true,"confidence":0.95,"feedback":"Short review"}
+==============================
+
+
+===== MEMORY SAVED =====
+Task: Read the contents of README.md
+========================
+
+Status: PASS
+Duration: 15.06 seconds
+Checks: {'file_read_tool_executed': True, 'file_content_returned': True, 'source_file_exists': True}
+
+[10/10] multistep_001
+Task: Calculate 20 multiplied by 5, then add 15.
+
+===== MEMORY RETRIEVAL =====
+Found 5 relevant memories
+- Calculate 20 multiplied by 5, then add 15.
+- Calculate 50 multiplied by 3 and then add 20.
+- Calculate 10 multiplied by 5
+- Calculate 25 multiplied by 4 and then add 10.
+- Calculate 25 multiplied by 4
+============================
+
+
+===== SUPERVISOR RESPONSE =====
+{"plan":[{"id":1,"specialist":"coding","description":"Compute 20 * 5 + 15","required_inputs":[],"expected_output":"Result of calculation","complexity":"low","status":"pending"}]}
+================================
+
+
+===== TOOL LOOP DECISION =====
+{'use_tool': True, 'tool_name': 'calculator', 'arguments': {'expression': '20 * 5 + 15'}, 'reason': 'The task requires a mathematical calculation.'}
+==============================
+
+
+===== TOOL LOOP RESULT =====
+{'used': True, 'tool_name': 'calculator', 'result': 115}
+============================
+
+[REVIEWER] finish_reason=stop
+
+===== REVIEWER RESPONSE =====
+{"approved":true,"confidence":0.98,"feedback":"Correct"}
+==============================
+
+[FINAL] finish_reason=stop
+
+===== MEMORY SAVED =====
+Task: Calculate 20 multiplied by 5, then add 15.
+========================
+
+Status: PASS
+Duration: 3.51 seconds
+Checks: {'expected_result_present': True, 'calculator_used': True, 'calculator_result_present': True}
+
+============================================================
+EVALUATION SUMMARY
+============================================================
+Total tests : 10
+Passed      : 5
+Failed      : 5
+Success rate: 50.0%
+Report saved: C:\Users\abhig\Downloads\agent-orchestration-system\evaluation\evaluation_results.json
