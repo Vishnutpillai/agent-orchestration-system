@@ -94,11 +94,13 @@ def workflow_response(
 
 
 # =========================================================
-# HEALTH CHECK
+# ROOT ENDPOINT
 # =========================================================
 
 @app.get("/")
 def root():
+    """Return basic API status."""
+
     logger.info(
         "Health check requested",
         extra={
@@ -110,6 +112,21 @@ def root():
     return {
         "message": "Agent Orchestration System API",
         "status": "running",
+    }
+
+
+# =========================================================
+# DEDICATED HEALTH ENDPOINT
+# =========================================================
+
+@app.get("/health")
+def health_check():
+    """Basic liveness check for deployment platforms."""
+
+    return {
+        "status": "healthy",
+        "service": "agent-orchestration-system",
+        "version": app.version,
     }
 
 
@@ -176,7 +193,7 @@ def run_agent(request: TaskRequest):
 
         return response
 
-    except Exception as exc:
+    except Exception:
         logger.exception(
             "Agent workflow failed",
             extra={
@@ -187,7 +204,6 @@ def run_agent(request: TaskRequest):
                     2,
                 ),
                 "status": "failed",
-                "error_type": type(exc).__name__,
             },
         )
 
@@ -287,7 +303,7 @@ def decide_approval(
     except HTTPException:
         raise
 
-    except Exception as exc:
+    except Exception:
         logger.exception(
             "Approval workflow failed",
             extra={
@@ -298,7 +314,6 @@ def decide_approval(
                     2,
                 ),
                 "status": "failed",
-                "error_type": type(exc).__name__,
             },
         )
 
@@ -388,7 +403,7 @@ def get_run_status(thread_id: str):
     except HTTPException:
         raise
 
-    except Exception as exc:
+    except Exception:
         logger.exception(
             "Could not retrieve workflow status",
             extra={
@@ -399,7 +414,6 @@ def get_run_status(thread_id: str):
                     2,
                 ),
                 "status": "failed",
-                "error_type": type(exc).__name__,
             },
         )
 
@@ -415,6 +429,8 @@ def get_run_status(thread_id: str):
 
 @app.get("/tools")
 def list_tools():
+    """List tools registered with the agent system."""
+
     logger.info(
         "Tool registry requested",
         extra={
